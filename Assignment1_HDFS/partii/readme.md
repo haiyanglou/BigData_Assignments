@@ -1,3 +1,5 @@
+Since the given Download link is http://corpus.byu.edu/full-text/formats.asp, so I open this link and chose Linear text Wikipedia: 1.8 mw as the corpus. The download address of this corpus is http://corpus.byu.edu/wikitext-samples/text.zip
+
 This readme file is used to illustrate how to execute the programs of assignment1 partii.
 Firstly, import the JavaHDFS project in eclipse, and then right click label JavaHDFS, select Run As Maven build. 
 This will generate a jar file called JavaHDFS-0.0.1-SNAPSHOT.jar in target directory.
@@ -18,4 +20,4 @@ Then type “hfs bfs -ls /user/lxq160030/assignment1, and we can see that the co
 
 
 
-
+

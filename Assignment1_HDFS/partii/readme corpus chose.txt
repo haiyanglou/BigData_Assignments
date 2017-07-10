@@ -1,1 +1,0 @@
-Since the given Download link is http://corpus.byu.edu/full-text/formats.asp, so I open this link and chose Linear text Wikipedia: 1.8 mw as the corpus. The download address of this corpus is http://corpus.byu.edu/wikitext-samples/text.zip

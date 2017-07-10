@@ -41,4 +41,4 @@ Then type “hfs bfs -ls /user/lxq160030/assignment1, and we can see that all si
 
 
 
-
+
