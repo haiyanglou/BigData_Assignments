@@ -7,9 +7,9 @@ val average2 = average1.mapValues{case (sum, count) => (1.0 * sum) / count }
 
 val userfile = sc.textFile("user.csv")
 
-val content = Console.readLine()
+//val content = Console.readLine()
 
-val user = userfile.map(a=>a.split('^')).filter(a=>a(1).contains(content)).map(a=>(a(0),a(1)))
+val user = userfile.map(a=>a.split('^')).filter(a=>a(1).contains("Matt J.")).map(a=>(a(0),a(1)))
 
 val afterjoin = user.join(average2)
 val newMap = afterjoin.map(x=>((x._2._1, x._1),x._2._2)).sortBy(_._2, false)

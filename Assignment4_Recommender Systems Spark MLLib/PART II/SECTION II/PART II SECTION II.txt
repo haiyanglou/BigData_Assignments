@@ -1,0 +1,9 @@
+https://databricks-prod-cloudfront.cloud.databricks.com/public/4027ec902e239c93eaaa8714f173bcfc/1167720815458194/555338165341140/7004078490200334/latest.html
+
+Dataset URL:
+http://eigentaste.berkeley.edu/dataset/
+
+Dataset name: 
+Anonymous Ratings from the Jester Online Joke Recommender System Dataset 2
+
+Over 1.7 million continuous ratings (-10.00 to +10.00) of 150 jokes from 59,132 users: collected between November 2006 - May 2009

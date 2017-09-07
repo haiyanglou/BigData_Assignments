@@ -8,7 +8,7 @@ CS6350 Assignment3
 3.Upload the 3 .csv files (review.csv, business.csv, user.csv) to netid@cs6360.utdallas.edu cluster, then put them into hdfs directory (with filecopywith progress function in assignment1 or use ‘-put’ function of hdfs) 
 
 
-4.Get into the Spark-shell mode with command ‘Spark-shell —-master yarn’ 
+4.Get into the Spark-shell mode with command ‘spark-shell —-master yarn’ 
 
 5.For all the 5 .scala files, typing command under “scala>” mode like 
 “:load /pathtofile/q1.scala”. For example “:load /home/013/l/lx/lxq160030/q1.scala”

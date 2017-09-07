@@ -1,0 +1,160 @@
+It is strongly recommended to adjust to give the docker 4 CPUs and 6.0 GB Memory in the docker Preferences label
+The header in file 201508_trip_data.csv has been removed, so that the contents inside the file are pure data.
+
+
+
+
+Step I:
+
+Open docker, then type in command line:
+docker run --hostname=quickstart.cloudera --privileged=true -t -i -p 127.0.0.1:8888:8888 cloudera/quickstart /usr/bin/docker-quickstart 
+to start cloudera
+
+Then type the following command in [root@quickstart /]# command line:
+hbase shell 
+to enter hbase, 
+
+and then type: 
+create 'trip', 'colfam1' 
+to create the table, 
+
+and then type: 
+exit
+to go back to [root@quickstart /]# command line
+
+Open another command line, type:
+docker ps 
+to find the CONTAINER ID of current executing container, 
+
+and then type a command, for example:
+docker cp /Users/qinlichao/desktop/201508_trip_data.csv CONTAINER ID:/201508_trip_data.csv
+(/Users/qinlichao/desktop/201508_trip_data.csv is the directory where I store the csv file in my computer)
+to copy the local csv file into cloudera directory
+
+You can check it by typing:
+ls
+in [root@quickstart /]# command line
+
+Then type: 
+hdfs dfs -copyFromLocal 201508_trip_data.csv hdfs:/
+in [root@quickstart /]# command line to copy csv file into HDFS directory
+
+You can check it by typing:
+hdfs dfs -ls /
+in [root@quickstart /]# command line
+
+Then type:
+pig -x local
+in [root@quickstart /]# command line to enter pig command line
+
+in grunt> command line, type in the following command:
+raw = LOAD '201508_trip_data.csv' USING PigStorage(',') AS (c1:chararray, c2:int, c3:chararray, c4:chararray, c5:chararray, c6:chararray, c7:chararray, c8:chararray, c9:chararray, c10:chararray, c11:chararray);
+T = FOREACH raw GENERATE c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11;
+STORE T INTO 'hbase://default:trip' USING org.apache.pig.backend.hadoop.hbase.HBaseStorage('colfam1:c2,colfam1:c3,colfam1:c4,colfam1:c5,colfam1:c6,colfam1:c7,colfam1:c8,colfam1:c9,colfam1:c10,colfam1:c11');
+
+It is strongly recommended NOT to open GUI online since it often results in unexpected error in following processes. 
+
+While, we can check the data importing into HBase by using following command in pig command line:
+R = LOAD 'hbase://default:trip' USING org.apache.pig.backend.hadoop.hbase.HBaseStorage('colfam1:c2 colfam1:c3 colfam1:c4 colfam1:c5 colfam1:c6 colfam1:c7 colfam1:c8 colfam1:c9 colfam1:c10 colfam1:c11', '-loadKey true');
+dump R;
+
+And you will see the data of the HBase Table in pig
+
+
+
+
+
+Step II:
+After checking that data having been imported into HBase, type “quit” to exit the pig command line and go back into [root@quickstart /]# command line, 
+
+then typing:
+curl -o spark-hbase-connector.jar http://central.maven.org/maven2/it/nerdammer/bigdata/spark-hbase-connector_2.10/0.9.2/spark-hbase-connector_2.10-0.9.2.jar
+to download the jar file
+
+Then typing:
+spark-shell --jars spark-hbase-connector.jar
+to enter spark command line
+
+Then in scala> command line, type:
+import org.apache.spark.sql.Row
+import org.apache.spark.rdd.RDD
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkConf
+import it.nerdammer.spark.hbase._
+sc.hadoopConfiguration.set("spark.hbase.host", "thehost")
+val hBaseRDD = sc.hbaseTable[(String, String, String, String, String, String, String, String, String, String)]("trip").select("c2","c3","c4","c5","c6","c7","c8","c9","c10","c11").inColumnFamily("colfam1")
+
+
+
+
+
+- List the top 10 most popular start stations i.e. those start stations that have the highest count in the dataset
+
+val q1 = hBaseRDD.map(i => i._3).map((_,1)).reduceByKey(_+_).map(x=>(x._2,x._1)).sortByKey(false).map(x=>(x._2,x._1)).take(10)
+Output:
+q1: Array[(String, Int)] = Array((San Francisco Caltrain (Townsend at 4th),26304), (San Francisco Caltrain 2 (330 Townsend),21758), (Harry Bridges Plaza (Ferry Building),17255), (Temporary Transbay Terminal (Howard at Beale),14436), (Embarcadero at Sansome,14158), (2nd at Townsend,14026), (Townsend at 7th,13752), (Steuart at Market,13687), (Market at 10th,11885), (Market at Sansome,11431))
+
+
+
+- List the top 10 most popular end stations i.e. those end stations that have the highest count in the dataset
+
+val q2 = hBaseRDD.map(i => i._6).map((_,1)).reduceByKey(_+_).map(x=>(x._2,x._1)).sortByKey(false).map(x=>(x._2,x._1)).take(10)
+Output:
+q2: Array[(String, Int)] = Array((San Francisco Caltrain (Townsend at 4th),34810), (San Francisco Caltrain 2 (330 Townsend),22523), (Harry Bridges Plaza (Ferry Building),17810), (2nd at Townsend,15463), (Townsend at 7th,15422), (Embarcadero at Sansome,15065), (Market at Sansome,13916), (Steuart at Market,13617), (Temporary Transbay Terminal (Howard at Beale),12966), (Powell Street BART,10239))
+
+
+
+- List the top 10 start stations that have the highest average trip duration
+
+val q3 = hBaseRDD.map(i => (i._3, i._1.toDouble)).groupByKey().map(x=>(x._1,x._2.reduce(_+_)/x._2.count(x=>true))).map(x=>(x._2,x._1)).sortByKey(false).map(x=>(x._2,x._1)).take(10)
+Output:
+q3: Array[(String, Double)] = Array((University and Emerson,7906.343801652893), (Redwood City Medical Center,5764.846666666666), (San Jose Civic Center,5458.038759689923), (Park at Olive,4850.183510638298), (California Ave Caltrain Station,4009.605), (South Van Ness at Market,3884.2188563648742), (San Mateo County Center,3431.5590551181103), (Palo Alto Caltrain Station,3008.81541218638), (San Antonio Shopping Center,2747.6333021515434), (Cowper at University,2483.355902777778))
+
+
+
+- Which zip code has the highest number of stations (you can take either start or end stations)
+Taking start stations
+
+val topZip = hBaseRDD.map(x=>(x._3,(x._10,1.toInt)))
+val q4 = topZip.reduceByKey((x,y)=>(x._1,(x._2+y._2))).sortBy(-_._2._2).map(x=>(x._1,x._2._1)).collect().take(1)
+Output:
+q4: Array[(String, String)] = Array((San Francisco Caltrain (Townsend at 4th),95035))
+
+
+
+- What is the average duration of the trips that start from any station that contains 'San Francisco' in their name
+
+val startWithSF = hBaseRDD.map(x=>(x._3,(x._1.toDouble,1))).filter(x=>x._1.contains("San Francisco"))
+val avgSF = startWithSF.reduceByKey((x,y)=>(x._1+y._1,x._2+y._2)).map(x=>("San Francisco",(x._2._1,x._2._2)))
+val q5 = avgSF.reduceByKey((x,y)=>(x._1+y._1,x._2+y._2)).map(x=>(x._1,x._2._1.toDouble/x._2._2.toDouble))
+q5.collect().foreach(println)
+Output:
+(San Francisco,794.9321746418167)
+
+
+
+- Give the breakdown of subscriber type of users and the count of their occurrence
+
+val q6 = hBaseRDD.map(x=>(x._9,1)).reduceByKey((x,y)=>(x+y))
+q6.collect()
+Output:
+res17: Array[(String, Int)] = Array((Subscriber,310217), (Customer,43935)) 
+
+
+
+- Give summary statistics for the duration column e.g. count, min, max, mean, stddev
+
+val dataFrame = hBaseRDD.map(x=>x._1).toDF("c2")
+dataFrame.describe("c2").show()
+Output:
++-------+------------------+                                                    
+|summary|                c2|
++-------+------------------+
+|  count|            354152|
+|   mean|1046.0326611172604|
+| stddev|30016.936156929834|
+|    min|               100|
+|    max|              9999|
++-------+------------------+
+
+

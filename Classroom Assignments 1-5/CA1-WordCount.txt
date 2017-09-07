@@ -1,0 +1,125 @@
+# Create the following RDD
+wordsList = ['cat', 'elephant', 'rat', 'rat', 'cat']
+wordsRDD = sc.parallelize(wordsList, 4)
+# Print out the type of wordsRDD
+print type(wordsRDD)
+
+# create a function
+def makePlural(word):
+    """Adds an 's' to `word`.
+
+    Note:
+        This is a simple function that only adds an 's'.  No attempt is made to follow proper
+        pluralization rules.
+
+    Args:
+        word (str): A string.
+
+    Returns:
+        str: A string with 's' added to it.
+    """
+    return *FILL_IN*
+
+print makePlural('cat')
+
+pluralRDD = wordsRDD.map(makePlural)
+# or
+pluralRDD = wordsRDD.map(lambda x: makePlural(x))
+print pluralRDD.collect()
+
+pluralLengths = (pluralRDD.map(lambda x: len(x))
+                 .collect())
+print pluralLengths
+
+
+Pair RDD
+----------
+
+# Now let's work with pair RDDs
+# Create a key value pair for each word, with the value being 1 
+# i.e. something like (cat, 1)
+
+wordPairs = wordsRDD.map(FILL_IN)
+print wordPairs.collect()
+
+# Now let's do the count for each key by summing values
+
+wordCounts = wordPairs.reduceByKey(FILL_IN)
+print wordCounts.collect()
+
+# Now let's do the map and reduce in one line of code
+
+wordCountsCollected = (wordsRDD.map(FILL_IN)
+                       .reduceByKey(FILL_IN)
+                       .collect())
+print wordCountsCollected
+
+# Now I just want the unique words i.e. unduplicated words
+uniqueWords = wordsRDD.FILL_IN
+print uniqueWords
+
+
+# Let's create a function that takes a word RDD and returns the word count by key
+def wordCount(wordListRDD):
+    """Creates a pair RDD with word counts from an RDD of words.
+
+    Args:
+        wordListRDD (RDD of str): An RDD consisting of words.
+
+    Returns:
+        RDD of (str, int): An RDD consisting of (word, count) tuples.
+    """
+    return wordListRDD.map(FILL_IN)
+	
+	
+print wordCount(wordsRDD).collect()
+
+
+# Below is a function that removes punctuations
+import re
+def removePunctuation(text):
+    """Removes punctuation, changes to lower case, and strips leading and trailing spaces.
+
+    Note:
+        Only spaces, letters, and numbers should be retained.  Other characters should should be
+        eliminated (e.g. it's becomes its).  Leading and trailing spaces should be removed after
+        punctuation is removed.
+
+    Args:
+        text (str): A string.
+
+    Returns:
+        str: The cleaned up string.
+    """
+    return re.sub(r'[^a-z0-9\s]','', text.lower()).strip()
+print removePunctuation('Hi, you!')
+print removePunctuation(' No under_score!')
+print removePunctuation(' *      Remove punctuation then spaces  * ')
+
+
+import os.path
+baseDir = os.path.join('databricks-datasets')
+inputPath = os.path.join('cs100', 'lab1', 'data-001', 'shakespeare.txt')
+fileName = os.path.join(baseDir, inputPath)
+
+shakespeareRDD = (sc
+                  .textFile(fileName, 8)
+                  .map(removePunctuation))
+print '\n'.join(shakespeareRDD
+                .zipWithIndex()  # to (line, lineNum)
+                .map(lambda (l, num): '{0}: {1}'.format(num, l))  # to 'lineNum: line'
+                .take(15))
+				
+
+shakespeareWordsRDD = shakespeareRDD.flatMap(lambda x: x.split(" "))
+shakespeareWordCount = shakespeareWordsRDD.count()
+print shakespeareWordsRDD.top(5)
+print shakespeareWordCount
+# there are too many blank words, filter it down to non-blank words i.e. those that have length > 0
+shakeWordsRDD = shakespeareWordsRDD.filter(FILL_IN)
+shakeWordCount = shakeWordsRDD.count()
+print shakeWordCount
+
+# let's apply wordCount method to shakeWordsRDD and then take the top 15 words in descending order
+top15WordsAndCounts = wordCount(shakeWordsRDD).FILL_IN
+print '\n'.join(map(lambda (w, c): '{0}: {1}'.format(w, c), top15WordsAndCounts))
