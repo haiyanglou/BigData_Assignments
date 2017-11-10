@@ -1,6 +1,7 @@
-# BigData_Projects
+# Big Data Analytics and Management Assignments
 
 Assignment1a_HDFS functions
+
 Assignment1b_HDFS functions
 
 Assignment2_Yelp Dataset Analytics using MapReduce
